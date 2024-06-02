@@ -69,7 +69,6 @@ public class KuwaharaController {
         baos.close();
         log.info("Finished processing image");
         return imageInByte;
-
     }
 }
 

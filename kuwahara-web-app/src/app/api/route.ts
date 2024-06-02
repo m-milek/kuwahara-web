@@ -1,4 +1,6 @@
+import { NextResponse } from "next/server";
+
 export async function GET(request: Request) {
   console.info("Called route");
-  return Response.json({message: "Called Route"});
+  return NextResponse.json({message: "Called route"});
 }
