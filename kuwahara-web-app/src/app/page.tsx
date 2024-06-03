@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { FormState } from "./uploadImage";
 import { uploadImage } from "./uploadImage";
 import Image from "next/image";
 import { useFormState, useFormStatus } from "react-dom";
+import ImageContainer from "./ImageContainer";
 
 const initialState: FormState = {
   message: ""
@@ -33,12 +34,23 @@ function ImageForm(props: {
   filterSize: number;
   setFilterSize: Function;
   setImageUrl: Function;
-  formAction: any;
+  setFilteredImageUrl: any;
+  setImageIsProcessing: Function;
 }) {
   const [message, setMessage] = useState("");
 
+  const onSubmit = (e: any) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    props.setImageIsProcessing(true);
+    uploadImage({ message: "" }, formData).then(res => {
+      props.setFilteredImageUrl(res.message);
+      props.setImageIsProcessing(false);
+    });
+  };
+
   return (
-    <form action={props.formAction} className="flex flex-col items-center">
+    <form onSubmit={onSubmit} className="flex flex-col items-center">
       <div>{message}</div>
       <FilterSizeInput
         filterSize={props.filterSize}
@@ -69,42 +81,11 @@ function ImageForm(props: {
   );
 }
 
-function ImageContainer(props: {
-  firstImageSrc: string | null;
-  secondImageSrc: string | null;
-}) {
-  const imageSize = 400;
-  return (
-    <div className="max-w-max h-96 items-center border-4 border-black flex flex-row flex-grow-0 flex-1">
-      {[props.firstImageSrc, props.secondImageSrc].map(
-        (src, i) =>
-          src ? (
-            <Image
-              src={src}
-              className="max-h-full max-w-full object-contain"
-              placeholder="empty"
-              width={imageSize}
-              height={imageSize}
-              alt="Your image"
-              key={i}
-            />
-          ) : (
-            <ImagePlaceholder size={imageSize} key={i} />
-          )
-      )}
-    </div>
-  );
-}
-
-function ImagePlaceholder(props: { size: number }) {
-  return <div className={`w-[${props.size}px] h-full color-gray-300`} />;
-}
-
 export default function Home() {
   const [filterSize, setFilterSize] = useState(9);
   const [imageUrl, setImageUrl] = useState<null | string>(null);
-
-  const [formState, formAction] = useFormState(uploadImage, initialState);
+  const [filteredImageUrl, setFilteredImageUrl] = useState<null | string>(null);
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
 
   return (
     <main className="flex min-h-screen flex-col items-center p-6">
@@ -114,11 +95,13 @@ export default function Home() {
         filterSize={filterSize}
         setFilterSize={setFilterSize}
         setImageUrl={setImageUrl}
-        formAction={formAction}
+        setFilteredImageUrl={setFilteredImageUrl}
+        setImageIsProcessing={setIsImageProcessing}
       />
       <ImageContainer
         firstImageSrc={imageUrl}
-        secondImageSrc={`data:${"image/png"};base64,${formState.message}`}
+        secondImageSrc={`data:${"image/png"};base64,${filteredImageUrl}`}
+        isImageProcessing={isImageProcessing}
       />
     </main>
   );
